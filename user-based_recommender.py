@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import time
 
 import similarity as sim
 import naive_recommender as nav
@@ -17,52 +18,64 @@ def generate_m(movies_idx, users, ratings):
 
 
 def user_based_recommender(target_user_idx, matrix):
+    # Get the target user's ratings as a Series and a list
     target_user = matrix.loc[target_user_idx]
-    # for i in range(300):
-    #     print(target_user.to_list()[i], target_user.index.to_list()[i])
-    # print(target_user.to_list()[225])
     target_user_vector = target_user.to_list()
-    recommendations = []
-    
-    # Compute the similarity between  the target user and each other user in the matrix. 
-    # We recommend to store the results in a dataframe (userId and Similarity)
+
+    # Compute the similarity between  the target user and each other user in the matrix.
+    print("Computing the similarity vector for user {}...".format(target_user_idx))
     sims = pd.DataFrame(columns=["userId", "similarity"])
     sims.reindex(matrix.index)
     sims["similarity"] = matrix.apply(lambda row: sim.compute_similarity(target_user_vector, row.to_list()), axis=1)
     sims.userId = matrix.index
     sims = sims[sims.userId != target_user_idx]
-    print(sims.head(20))
+    # print(sims.head(20))
 
     
-    # Determine the unseen movies by the target user. Those films are identfied 
-    # since don't have any rating. 
+    # Determine the unseen movies by the target user
     unseen_movies = target_user[target_user.isna()].index
     # print(unseen_movies[:300].tolist())
 
+
     # Find the top U most similar users to the target user
+    print("Finding nearest neighbors for user {}...".format(target_user_idx))
     U = 5 # Number of users to consider
     top_users_df = sims.sort_values("similarity", ascending=False).head(U)
-    print(top_users_df)
     top_users = top_users_df["userId"].to_list()
     top_users_sim = top_users_df["similarity"].to_list()
-    print(top_users, top_users_sim)
     sum_sims = sum(top_users_sim)
     top_users_sim = [sim/sum_sims for sim in top_users_sim]
-    print(top_users, top_users_sim)
-    # Generate recommendations for unrated movies based on user similarity and ratings.
-    avg_rating = ???
-    for movie in unseen_movies:
-        if movie not in matrix.columns:
-            for i in range(U):
+    # print(top_users, top_users_sim)
 
-        
+    # Compute the average rating for the target user and each of the top U users
+    target_nonan = [x for x in target_user if not np.isnan(x)]
+    target_avg = sum(target_nonan) / len(target_nonan)
+    user_avgs = []
+    for i in range(U):
+        uid = top_users[i]
+        user = matrix.loc[uid]
+        user_nonan = [x for x in user if not np.isnan(x)]
+        user_avg = sum(user_nonan) / len(user_nonan)
+        user_avgs.append(user_avg)
+
+    # Generate recommendations for unrated movies based on user similarity and ratings.
+    recommendations = []
+    print("Predicting ratings for user {}...".format(target_user_idx))
+    for movie in unseen_movies:
+        if movie in matrix.columns:
+            prediction = target_avg
+            for i in range(U):
+                prediction += top_users_sim[i] * (user[movie] - user_avgs[i])
+            recommendations.append((movie, prediction))
+           
     
-    return recommendations
+    return sorted(recommendations)
 
 
 
 if __name__ == "__main__":
-    
+    start = time.time()
+
     # Load the dataset
     path_to_ml_latest_small = './ml-latest-small/'
     dataset = ut.load_dataset_from_source(path_to_ml_latest_small)
@@ -79,24 +92,16 @@ if __name__ == "__main__":
     # user-to-user similarity
     target_user_idx = 123
     recommendations = user_based_recommender(target_user_idx, m)
-    # print(m.iloc[:, 40:].head(123))
      
     # The following code print the top 5 recommended films to the user
-    # for recomendation in recommendations[:5]:
-    #     rec_movie = dataset["movies.csv"][dataset["movies.csv"]["movieId"]  == recomendation[0]]
-    #     print (" Recomendation :Movie:{} (Genre: {})".format(rec_movie["title"].values[0], rec_movie["genres"].values[0]))
+    print("\nTop 5 recommendations for user {}".format(target_user_idx))
+    for recomendation in recommendations[:5]:
+        rec_movie = dataset["movies.csv"][dataset["movies.csv"]["movieId"]  == recomendation[0]]
+        print ("{} --- (Genre: {})".format(rec_movie["title"].values[0], rec_movie["genres"].values[0]))
 
     
-    # # Validation
-    # matrixmpa_genres = ut.matrix_genres(dataset["movies.csv"])
+    # Validation
+    matrixmpa_genres = ut.matrix_genres(dataset["movies.csv"])
+    # TODO - implement the validation part
     
-     
-    
-
-
-
-
-
-
-
-
+    print("\nExecution time: ", round(time.time() - start), " seconds.")
