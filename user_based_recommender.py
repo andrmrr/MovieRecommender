@@ -92,6 +92,7 @@ if __name__ == "__main__":
     # user-to-user similarity
     target_user_idx = 123
     recommendations = user_based_recommender(target_user_idx, m)
+    print(recommendations[:10])
      
     # The following code print the top 5 recommended films to the user
     print("\nTop 5 recommendations for user {}".format(target_user_idx))
