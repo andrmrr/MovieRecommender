@@ -46,6 +46,7 @@ def user_based_recommender(target_user_idx, matrix):
     sum_sims = sum(top_users_sim)
     top_users_sim = [sim/sum_sims for sim in top_users_sim]
     # print(top_users, top_users_sim)
+    print(top_users_df)
 
     # Compute the average rating for the target user and each of the top U users
     target_nonan = [x for x in target_user if not np.isnan(x)]
@@ -65,11 +66,14 @@ def user_based_recommender(target_user_idx, matrix):
         if movie in matrix.columns:
             prediction = target_avg
             for i in range(U):
-                prediction += top_users_sim[i] * (user[movie] - user_avgs[i])
+                user = matrix.loc[top_users[i]]
+                if not np.isnan(user[movie]):
+                    prediction += top_users_sim[i] * (user[movie] - user_avgs[i])
             recommendations.append((movie, prediction))
            
-    
-    return sorted(recommendations)
+    recommendations = sorted(recommendations, key=lambda x: x[1], reverse=True)
+    print(recommendations[:10])
+    return recommendations
 
 
 
