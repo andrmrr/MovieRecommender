@@ -12,8 +12,7 @@ def generate_m(movies_idx, users, ratings):
     for user in users:
         user_ratings = ratings[ratings["userId"] == user]
         for _, rating in user_ratings.iterrows():
-            m.loc[user][rating["movieId"]] = rating["rating"]
-    
+            m.at[user, rating["movieId"]] = rating["rating"]    
     return m 
 
 
@@ -29,13 +28,9 @@ def user_based_recommender(target_user_idx, matrix):
     sims["similarity"] = matrix.apply(lambda row: sim.compute_similarity(target_user_vector, row.to_list()), axis=1)
     sims.userId = matrix.index
     sims = sims[sims.userId != target_user_idx]
-    # print(sims.head(20))
-
     
     # Determine the unseen movies by the target user
     unseen_movies = target_user[target_user.isna()].index
-    # print(unseen_movies[:300].tolist())
-
 
     # Find the top U most similar users to the target user
     print("Finding nearest neighbors for user {}...".format(target_user_idx))
@@ -45,8 +40,6 @@ def user_based_recommender(target_user_idx, matrix):
     top_users_sim = top_users_df["similarity"].to_list()
     sum_sims = sum(top_users_sim)
     top_users_sim = [sim/sum_sims for sim in top_users_sim]
-    # print(top_users, top_users_sim)
-    print(top_users_df)
 
     # Compute the average rating for the target user and each of the top U users
     target_nonan = [x for x in target_user if not np.isnan(x)]
@@ -72,7 +65,6 @@ def user_based_recommender(target_user_idx, matrix):
             recommendations.append((movie, prediction))
            
     recommendations = sorted(recommendations, key=lambda x: x[1], reverse=True)
-    print(recommendations[:10])
     return recommendations
 
 
@@ -103,10 +95,5 @@ if __name__ == "__main__":
     for recomendation in recommendations[:5]:
         rec_movie = dataset["movies.csv"][dataset["movies.csv"]["movieId"]  == recomendation[0]]
         print ("{} --- (Genre: {})".format(rec_movie["title"].values[0], rec_movie["genres"].values[0]))
-
-    
-    # Validation
-    matrixmpa_genres = ut.matrix_genres(dataset["movies.csv"])
-    # TODO - implement the validation part
     
     print("\nExecution time: ", round(time.time() - start), " seconds.")
