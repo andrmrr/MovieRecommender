@@ -30,4 +30,4 @@ if __name__ == "__main__":
     for genre, count in sorted(genre_count.items(), 
                                key=lambda item: item[1],
                                reverse=True):
-        print(f'The genre {genre} was watched {count} times.')
+        print(f'The genre {genre} appears {count} times.')
