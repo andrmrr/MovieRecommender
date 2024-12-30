@@ -61,7 +61,7 @@ if __name__ == "__main__":
     dataset = utils.load_dataset_from_source(path_to_ml_latest_small)
     ratings, movies = dataset["ratings.csv"], dataset["movies.csv"]
     user_ids = list(set(ratings['userId']))
-    target_user_ids = random.sample(user_ids, 4)
+    target_user_ids = random.sample(user_ids, 40)
     l2_distances= []
     for user in target_user_ids:
         val1, val2 = validate_genre_similarity(user, ratings, movies, k=10)

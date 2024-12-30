@@ -21,7 +21,7 @@ def user_based_recommender(target_user_idx, matrix):
     target_user = matrix.loc[target_user_idx]
     target_user_vector = target_user.to_list()
 
-    # Compute the similarity between  the target user and each other user in the matrix.
+    # Compute the similarity between the target user and each other user in the matrix.
     print("Computing the similarity vector for user {}...".format(target_user_idx))
     sims = pd.DataFrame(columns=["userId", "similarity"])
     sims.reindex(matrix.index)
@@ -34,7 +34,7 @@ def user_based_recommender(target_user_idx, matrix):
 
     # Find the top U most similar users to the target user
     print("Finding nearest neighbors for user {}...".format(target_user_idx))
-    U = 5 # Number of users to consider
+    U = 10 # Number of users to consider
     top_users_df = sims.sort_values("similarity", ascending=False).head(U)
     top_users = top_users_df["userId"].to_list()
     top_users_sim = top_users_df["similarity"].to_list()
